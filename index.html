@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRANSMISSION CHALLENGE — The Ultimate Auto Tech Game Show</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0e1a;
+    --surface:   #111827;
+    --card:      #1a2235;
+    --gold:      #f0b429;
+    --gold-dim:  #a07a10;
+    --red:       #e53e3e;
+    --blue:      #3b82f6;
+    --green:     #10b981;
+    --purple:    #8b5cf6;
+    --cyan:      #06b6d4;
+    --white:     #f0f4ff;
+    --muted:     #8892aa;
+    --border:    #2a3550;
+    --glow-gold: 0 0 30px rgba(240,180,41,0.4);
+    --glow-blue: 0 0 30px rgba(59,130,246,0.4);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCANLINE TEXTURE ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events:none; z-index:1000;
+  }
+
+  /* ── STAR FIELD BG ── */
+  .stars {
+    position:fixed; inset:0; overflow:hidden; z-index:0;
+  }
+  .stars::before, .stars::after {
+    content:'';
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(240,180,41,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 10%, rgba(59,130,246,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 80%, rgba(16,185,129,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 60%, rgba(240,180,41,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 50%, rgba(59,130,246,0.3) 0%, transparent 100%);
+    background-size: 300px 300px;
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from{opacity:.4} to{opacity:1} }
+
+  /* ── SCREENS ── */
+  .screen { display:none; position:relative; z-index:10; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; }
+
+  /* ═══════════════════════════════
+     INTRO SCREEN
+  ═══════════════════════════════ */
+  #intro {
+    align-items:center; justify-content:center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at center, #1a2a4a 0%, #0a0e1a 70%);
+  }
+
+  .show-title {
+    text-align:center; margin-bottom:3rem;
+  }
+  .show-title .eyebrow {
+    font-family:'Barlow Condensed', sans-serif;
+    font-size:1rem; letter-spacing:.5rem; color:var(--gold);
+    text-transform:uppercase; margin-bottom:.5rem;
+    animation: fadeUp .6s ease both;
+  }
+  .show-title h1 {
+    font-family:'Oswald', sans-serif;
+    font-size:clamp(2.8rem, 8vw, 6rem);
+    font-weight:700; line-height:1;
+    background: linear-gradient(135deg, #f0b429 0%, #fff5c0 50%, #f0b429 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 40px rgba(240,180,41,0.5));
+    animation: fadeUp .6s .1s ease both;
+  }
+  .show-title .subtitle {
+    font-size:1.1rem; color:var(--muted); margin-top:1rem;
+    animation: fadeUp .6s .2s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* Team setup cards */
+  .team-setup {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+    gap:1rem; width:100%; max-width:900px; margin-bottom:2rem;
+    animation: fadeUp .6s .3s ease both;
+  }
+  .team-card {
+    background:var(--card);
+    border:2px solid var(--border);
+    border-radius:12px; padding:1.2rem;
+    transition: border-color .2s;
+  }
+  .team-card:hover { border-color: var(--gold); }
+  .team-label {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.8rem; letter-spacing:.2rem;
+    color:var(--muted); text-transform:uppercase; margin-bottom:.5rem;
+  }
+  .team-name-input {
+    background:transparent; border:none; border-bottom:2px solid var(--border);
+    color:var(--white); font-family:'Oswald',sans-serif; font-size:1.4rem;
+    width:100%; outline:none; padding:.2rem 0;
+    transition: border-color .2s;
+  }
+  .team-name-input:focus { border-color:var(--gold); }
+  .team-dot {
+    width:12px; height:12px; border-radius:50%; margin-bottom:.8rem;
+  }
+
+  .btn-primary {
+    font-family:'Oswald',sans-serif; font-size:1.3rem; font-weight:600;
+    letter-spacing:.15rem; text-transform:uppercase;
+    background: linear-gradient(135deg, #f0b429, #d4941a);
+    color:#0a0e1a; border:none; border-radius:8px;
+    padding:.9rem 3rem; cursor:pointer;
+    box-shadow: var(--glow-gold);
+    transition: transform .15s, box-shadow .15s;
+    animation: fadeUp .6s .4s ease both;
+  }
+  .btn-primary:hover {
+    transform:translateY(-2px);
+    box-shadow: 0 0 50px rgba(240,180,41,0.6);
+  }
+  .btn-primary:active { transform:translateY(0); }
+
+  /* Round card previews */
+  .rounds-preview {
+    display:grid; grid-template-columns:repeat(5,1fr);
+    gap:.6rem; width:100%; max-width:900px;
+    margin-bottom:2rem; animation: fadeUp .6s .25s ease both;
+  }
+  .round-pill {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:.7rem .5rem; text-align:center;
+  }
+  .round-pill .rp-num {
+    font-family:'Oswald',sans-serif; font-size:1.4rem; color:var(--gold);
+  }
+  .round-pill .rp-name {
+    font-size:.65rem; color:var(--muted); margin-top:.1rem; text-transform:uppercase; letter-spacing:.05rem;
+  }
+  .round-pill .rp-pts {
+    font-size:.7rem; color:var(--green); margin-top:.2rem; font-weight:600;
+  }
+
+  /* ═══════════════════════════════
+     ROUND HEADER
+  ═══════════════════════════════ */
+  .game-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 2rem;
+    background:rgba(10,14,26,0.9);
+    border-bottom:1px solid var(--border);
+    position:sticky; top:0; z-index:100;
+  }
+  .gh-title {
+    font-family:'Oswald',sans-serif; font-size:1.1rem; color:var(--gold);
+    text-transform:uppercase; letter-spacing:.1rem;
+  }
+  .gh-round {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.75rem; color:var(--muted); letter-spacing:.2rem; text-transform:uppercase;
+  }
+  .scoreboard {
+    display:flex; gap:1rem;
+  }
+  .score-chip {
+    display:flex; align-items:center; gap:.5rem;
+    background:var(--card); border-radius:20px; padding:.3rem .8rem;
+    border:1px solid var(--border);
+  }
+  .score-dot { width:10px; height:10px; border-radius:50%; }
+  .score-name { font-family:'Barlow Condensed',sans-serif; font-size:.85rem; }
+  .score-val  { font-family:'Oswald',sans-serif; font-size:1rem; color:var(--gold); }
+
+  /* ═══════════════════════════════
+     ROUND INTRO SCREEN
+  ═══════════════════════════════ */
+  #round-intro {
+    align-items:center; justify-content:center; padding:2rem;
+  }
+  .ri-badge {
+    font-family:'Barlow Condensed',sans-serif;
+    letter-spacing:.4rem; font-size:.9rem; color:var(--gold);
+    text-transform:uppercase; margin-bottom:1rem;
+  }
+  .ri-title {
+    font-family:'Oswald',sans-serif;
+    font-size:clamp(2.5rem,6vw,4.5rem); font-weight:700;
+    text-align:center; margin-bottom:1rem;
+    animation: zoomIn .4s ease;
+  }
+  @keyframes zoomIn { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+  .ri-desc {
+    font-size:1.1rem; color:var(--muted); text-align:center;
+    max-width:600px; margin-bottom:2rem; line-height:1.6;
+  }
+  .ri-rules {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:1.5rem 2rem; max-width:600px;
+    margin-bottom:2rem;
+  }
+  .ri-rules h3 {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.8rem; letter-spacing:.25rem; color:var(--gold);
+    text-transform:uppercase; margin-bottom:.8rem;
+  }
+  .ri-rules ul { list-style:none; }
+  .ri-rules li {
+    padding:.3rem 0; color:var(--muted); font-size:.95rem;
+    border-bottom:1px solid var(--border); display:flex; gap:.6rem;
+  }
+  .ri-rules li:last-child { border-bottom:none; }
+  .ri-rules li::before { content:'▸'; color:var(--gold); flex-shrink:0; }
+
+  /* ═══════════════════════════════
+     QUESTION SCREEN
+  ═══════════════════════════════ */
+  #question-screen {
+    padding:0; flex-direction:column;
+  }
+  .q-body {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:2rem;
+  }
+  .q-meta {
+    display:flex; gap:1rem; align-items:center; margin-bottom:1.5rem;
+  }
+  .q-badge {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.75rem; letter-spacing:.2rem; text-transform:uppercase;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:20px; padding:.25rem .8rem; color:var(--muted);
+  }
+  .q-points {
+    font-family:'Oswald',sans-serif; font-size:1.1rem; color:var(--gold);
+  }
+  .q-topic {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.75rem; letter-spacing:.15rem; text-transform:uppercase;
+    color:var(--cyan); padding:.25rem .8rem;
+    border-radius:20px; background:rgba(6,182,212,0.1);
+    border:1px solid rgba(6,182,212,0.3);
+  }
+
+  .q-text {
+    font-family:'Oswald',sans-serif;
+    font-size:clamp(1.4rem,3.5vw,2.2rem); font-weight:600;
+    text-align:center; max-width:800px; line-height:1.3;
+    margin-bottom:2.5rem;
+    animation: fadeUp .3s ease;
+  }
+
+  /* MCQ options */
+  .options-grid {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:1rem; width:100%; max-width:800px;
+    animation: fadeUp .3s .1s ease both;
+  }
+  .opt-btn {
+    display:flex; align-items:center; gap:1rem;
+    background:var(--card); border:2px solid var(--border);
+    border-radius:10px; padding:1rem 1.5rem; cursor:pointer;
+    transition: all .2s; text-align:left;
+    font-family:'Barlow',sans-serif; font-size:1rem; color:var(--white);
+  }
+  .opt-btn:hover:not(:disabled) {
+    border-color:var(--gold); background:#1f2d44;
+    transform:translateY(-2px);
+  }
+  .opt-btn:disabled { cursor:default; }
+  .opt-btn.correct  { border-color:var(--green)!important; background:rgba(16,185,129,0.15)!important; }
+  .opt-btn.wrong    { border-color:var(--red)!important;   background:rgba(229,62,62,0.15)!important; }
+  .opt-letter {
+    font-family:'Oswald',sans-serif; font-size:1.2rem; font-weight:700;
+    color:var(--gold); min-width:1.5rem;
+  }
+
+  /* Open answer / reveal */
+  .open-answer-area {
+    width:100%; max-width:700px; text-align:center;
+    animation: fadeUp .3s .1s ease both;
+  }
+  .answer-hidden {
+    background:var(--card); border:2px dashed var(--border);
+    border-radius:12px; padding:2rem; cursor:pointer;
+    font-family:'Barlow Condensed',sans-serif; font-size:1rem;
+    color:var(--muted); letter-spacing:.1rem; text-transform:uppercase;
+    transition: all .2s;
+  }
+  .answer-hidden:hover { border-color:var(--gold); color:var(--gold); }
+  .answer-reveal {
+    background:rgba(16,185,129,0.15);
+    border:2px solid var(--green);
+    border-radius:12px; padding:1.5rem 2rem;
+    font-family:'Oswald',sans-serif; font-size:1.6rem;
+    color:var(--green); display:none;
+    animation: zoomIn .3s ease;
+  }
+
+  /* Timer bar */
+  .timer-wrap {
+    width:100%; max-width:800px; margin-bottom:1rem;
+  }
+  .timer-bar-bg {
+    height:6px; background:var(--border); border-radius:3px; overflow:hidden;
+  }
+  .timer-bar-fill {
+    height:100%; background:linear-gradient(90deg, var(--green), var(--gold));
+    border-radius:3px; transition:width .5s linear;
+    transform-origin:left;
+  }
+  .timer-label {
+    font-family:'Oswald',sans-serif; font-size:.9rem; color:var(--muted);
+    text-align:right; margin-top:.3rem;
+  }
+
+  /* Score award popup */
+  .score-popup {
+    position:fixed; top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(0);
+    background:var(--card); border:2px solid var(--gold);
+    border-radius:16px; padding:2rem 3rem; text-align:center;
+    z-index:500; box-shadow:var(--glow-gold);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+  }
+  .score-popup.show { transform:translate(-50%,-50%) scale(1); pointer-events:all; }
+  .score-popup h2 {
+    font-family:'Oswald',sans-serif; font-size:2rem; color:var(--gold);
+  }
+  .score-popup p { color:var(--muted); margin-top:.5rem; }
+
+  /* Who answers buttons */
+  .who-answers {
+    display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;
+    margin-top:1.5rem;
+  }
+  .team-buzz-btn {
+    font-family:'Oswald',sans-serif; font-size:1rem; font-weight:600;
+    letter-spacing:.1rem; text-transform:uppercase;
+    border:2px solid; border-radius:8px;
+    padding:.6rem 1.8rem; cursor:pointer;
+    transition:all .2s; background:transparent;
+  }
+  .team-buzz-btn:hover { transform:translateY(-2px); }
+
+  /* Lifeline panel */
+  .lifeline-panel {
+    display:flex; gap:.8rem; justify-content:center; margin-bottom:1.5rem;
+    animation: fadeUp .3s .15s ease both;
+  }
+  .lifeline-btn {
+    font-family:'Barlow Condensed',sans-serif; font-size:.8rem;
+    letter-spacing:.1rem; text-transform:uppercase;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:.5rem 1rem; cursor:pointer;
+    color:var(--muted); transition:all .2s; display:flex; align-items:center; gap:.4rem;
+  }
+  .lifeline-btn:hover:not(.used) { border-color:var(--cyan); color:var(--cyan); }
+  .lifeline-btn.used { opacity:.3; cursor:default; text-decoration:line-through; }
+  .lifeline-icon { font-size:1rem; }
+
+  /* Teacher controls */
+  .teacher-controls {
+    display:flex; gap:.8rem; padding:1rem 2rem;
+    background:rgba(10,14,26,0.95);
+    border-top:1px solid var(--border);
+    justify-content:space-between; align-items:center;
+  }
+  .tc-left { display:flex; gap:.8rem; align-items:center; }
+  .tc-right { display:flex; gap:.8rem; align-items:center; }
+  .btn-sm {
+    font-family:'Barlow Condensed',sans-serif; font-size:.8rem; letter-spacing:.1rem;
+    text-transform:uppercase; background:var(--card); border:1px solid var(--border);
+    border-radius:6px; padding:.4rem 1rem; cursor:pointer; color:var(--white);
+    transition:all .2s;
+  }
+  .btn-sm:hover { border-color:var(--gold); color:var(--gold); }
+  .btn-sm.green:hover { border-color:var(--green); color:var(--green); }
+  .btn-sm.red:hover   { border-color:var(--red); color:var(--red); }
+
+  /* Award score buttons */
+  .award-btns { display:flex; gap:.5rem; }
+  .award-btn {
+    font-family:'Oswald',sans-serif; font-size:.8rem;
+    border-radius:6px; padding:.35rem .8rem; cursor:pointer; border:1px solid;
+    transition:all .2s;
+  }
+
+  /* ═══════════════════════════════
+     LEADERBOARD SCREEN
+  ═══════════════════════════════ */
+  #leaderboard {
+    align-items:center; justify-content:center; padding:2rem;
+  }
+  .lb-title {
+    font-family:'Oswald',sans-serif; font-size:2.5rem; color:var(--gold);
+    text-align:center; margin-bottom:.5rem;
+  }
+  .lb-subtitle {
+    font-family:'Barlow Condensed',sans-serif; font-size:.8rem;
+    letter-spacing:.3rem; text-transform:uppercase; color:var(--muted);
+    text-align:center; margin-bottom:2rem;
+  }
+  .lb-entries {
+    width:100%; max-width:700px; display:flex; flex-direction:column; gap:.8rem;
+  }
+  .lb-entry {
+    display:flex; align-items:center; gap:1.5rem;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:1.2rem 1.5rem;
+    animation:fadeUp .4s ease both;
+  }
+  .lb-entry:nth-child(1) { border-color:var(--gold); box-shadow:var(--glow-gold); }
+  .lb-entry:nth-child(2) { border-color:var(--muted); }
+  .lb-entry:nth-child(3) { border-color:#cd7f32; }
+  .lb-rank {
+    font-family:'Oswald',sans-serif; font-size:2rem; color:var(--gold);
+    min-width:2rem; text-align:center;
+  }
+  .lb-dot  { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
+  .lb-name { font-family:'Oswald',sans-serif; font-size:1.4rem; flex:1; }
+  .lb-score{
+    font-family:'Oswald',sans-serif; font-size:2rem; color:var(--gold);
+  }
+  .lb-bar-wrap { flex:2; }
+  .lb-bar-bg   { background:var(--border); height:8px; border-radius:4px; overflow:hidden; }
+  .lb-bar-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+
+  /* ═══════════════════════════════
+     FINAL SCREEN
+  ═══════════════════════════════ */
+  #final-screen {
+    align-items:center; justify-content:center; padding:2rem;
+    background:radial-gradient(ellipse at center, #1a2a1a 0%, #0a0e1a 70%);
+  }
+  .trophy { font-size:5rem; text-align:center; animation:bounce 1s ease infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-15px)} }
+  .final-winner {
+    font-family:'Oswald',sans-serif; font-size:3rem; color:var(--gold);
+    text-align:center; margin:1rem 0;
+  }
+  .confetti-piece {
+    position:fixed; width:8px; height:8px; border-radius:2px;
+    animation:fall 3s ease-in infinite;
+  }
+  @keyframes fall {
+    from { transform:translateY(-20px) rotate(0deg); opacity:1; }
+    to   { transform:translateY(110vh) rotate(720deg); opacity:0; }
+  }
+
+  /* ═══════════════════════════════
+     SPEED ROUND SPECIFIC
+  ═══════════════════════════════ */
+  .buzz-countdown {
+    font-family:'Oswald',sans-serif; font-size:5rem; color:var(--red);
+    text-align:center; animation:pulse 1s ease infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+  /* Progress dots */
+  .progress-dots {
+    display:flex; gap:.4rem; justify-content:center; margin-bottom:1.5rem;
+  }
+  .progress-dot {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--border); transition:all .3s;
+  }
+  .progress-dot.done    { background:var(--green); }
+  .progress-dot.current { background:var(--gold); transform:scale(1.4); }
+
+  /* Round complete banner */
+  .round-complete {
+    text-align:center; padding:3rem;
+  }
+  .rc-title {
+    font-family:'Oswald',sans-serif; font-size:3rem; color:var(--gold);
+    margin-bottom:1rem;
+  }
+
+  /* Tooltip / instruction overlay */
+  .overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.8);
+    display:flex; align-items:center; justify-content:center;
+    z-index:200; display:none;
+  }
+  .overlay.show { display:flex; }
+  .overlay-box {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:2.5rem; max-width:500px; width:90%;
+    text-align:center;
+  }
+  .overlay-box h2 {
+    font-family:'Oswald',sans-serif; font-size:1.8rem; color:var(--gold);
+    margin-bottom:1rem;
+  }
+  .overlay-box p { color:var(--muted); line-height:1.6; margin-bottom:1.5rem; }
+
+  /* Category ladder (Who Wants to Be...) */
+  .cat-ladder {
+    display:flex; flex-direction:column; gap:.3rem; min-width:180px;
+  }
+  .cat-rung {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.8rem; letter-spacing:.05rem; text-transform:uppercase;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:4px; padding:.35rem .7rem; color:var(--muted);
+    transition:all .2s; text-align:center;
+  }
+  .cat-rung.active { background:var(--gold); color:#0a0e1a; border-color:var(--gold); font-weight:700; }
+  .cat-rung.done   { background:rgba(16,185,129,0.2); border-color:var(--green); color:var(--green); }
+
+  /* Layout for wwtbam style */
+  .q-layout {
+    display:flex; gap:2rem; width:100%; max-width:1100px; align-items:flex-start;
+  }
+  .q-main { flex:1; }
+  .q-sidebar { display:flex; flex-direction:column; gap:1rem; }
+
+  /* Responsive */
+  @media(max-width:700px) {
+    .options-grid { grid-template-columns:1fr; }
+    .rounds-preview { grid-template-columns:repeat(3,1fr); }
+    .q-layout { flex-direction:column; }
+    .cat-ladder { flex-direction:row; flex-wrap:wrap; }
+  }
+
+  .hidden { display:none!important; }
+  .glow-text { filter:drop-shadow(0 0 20px currentColor); }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- ══════════════════════════════════════════
+     INTRO / SETUP SCREEN
+══════════════════════════════════════════ -->
+<div id="intro" class="screen active">
+  <div class="show-title">
+    <div class="eyebrow">⚙ Automotive Engineering ⚙</div>
+    <h1>TRANSMISSION<br>CHALLENGE</h1>
+    <div class="subtitle">The Ultimate Manual &amp; Clutch Systems Game Show &mdash; 2 Hours of Pure Tech!</div>
+  </div>
+
+  <div class="rounds-preview">
+    <div class="round-pill">
+      <div class="rp-num">1</div>
+      <div class="rp-name">Fastest Finger</div>
+      <div class="rp-pts">1 pt each</div>
+    </div>
+    <div class="round-pill">
+      <div class="rp-num">2</div>
+      <div class="rp-name">Component ID</div>
+      <div class="rp-pts">2 pts each</div>
+    </div>
+    <div class="round-pill">
+      <div class="rp-num">3</div>
+      <div class="rp-name">Fault Files</div>
+      <div class="rp-pts">3 pts each</div>
+    </div>
+    <div class="round-pill">
+      <div class="rp-num">4</div>
+      <div class="rp-name">Hot Seat</div>
+      <div class="rp-pts">5 pts each</div>
+    </div>
+    <div class="round-pill">
+      <div class="rp-num">5</div>
+      <div class="rp-name">Speed Round</div>
+      <div class="rp-pts">1 pt / 5 sec</div>
+    </div>
+  </div>
+
+  <div class="team-setup" id="team-setup">
+    <div class="team-card">
+      <div class="team-dot" style="background:#3b82f6"></div>
+      <div class="team-label">Team 1 Name</div>
+      <input class="team-name-input" id="t1" value="Team Alpha" maxlength="20">
+    </div>
+    <div class="team-card">
+      <div class="team-dot" style="background:#10b981"></div>
+      <div class="team-label">Team 2 Name</div>
+      <input class="team-name-input" id="t2" value="Team Bravo" maxlength="20">
+    </div>
+    <div class="team-card">
+      <div class="team-dot" style="background:#f0b429"></div>
+      <div class="team-label">Team 3 Name</div>
+      <input class="team-name-input" id="t3" value="Team Charlie" maxlength="20">
+    </div>
+    <div class="team-card">
+      <div class="team-dot" style="background:#e53e3e"></div>
+      <div class="team-label">Team 4 Name</div>
+      <input class="team-name-input" id="t4" value="Team Delta" maxlength="20">
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="startGame()">🎬 START THE SHOW</button>
+</div>
+
+<!-- ROUND INTRO -->
+<div id="round-intro" class="screen">
+  <div class="ri-badge" id="ri-badge">Round 1 of 5</div>
+  <div class="ri-title" id="ri-title">FASTEST FINGER FIRST</div>
+  <div class="ri-desc"  id="ri-desc">Quick-fire questions — first team to buzz in answers. One point per correct answer.</div>
+  <div class="ri-rules" id="ri-rules">
+    <h3>Round Rules</h3>
+    <ul id="ri-rules-list"></ul>
+  </div>
+  <button class="btn-primary" id="ri-start-btn" onclick="startRound()">▶ Begin Round</button>
+</div>
+
+<!-- QUESTION SCREEN -->
+<div id="question-screen" class="screen">
+  <div class="game-header">
+    <div>
+      <div class="gh-round" id="gh-round">Round 1 — Fastest Finger</div>
+      <div class="gh-title" id="gh-title">TRANSMISSION CHALLENGE</div>
+    </div>
+    <div class="scoreboard" id="scoreboard"></div>
+  </div>
+
+  <div class="q-body">
+    <div class="q-layout">
+      <div class="q-main">
+        <div class="progress-dots" id="progress-dots"></div>
+        <div class="q-meta">
+          <span class="q-badge" id="q-num">Q1</span>
+          <span class="q-points" id="q-points">+1 pt</span>
+          <span class="q-topic"  id="q-topic">Manual Transmission</span>
+        </div>
+        <div class="q-text" id="q-text">Question text appears here</div>
+
+        <div class="lifeline-panel" id="lifeline-panel">
+          <button class="lifeline-btn" id="ll-50" onclick="useLifeline50()">
+            <span class="lifeline-icon">✂️</span> 50/50
+          </button>
+          <button class="lifeline-btn" id="ll-hint" onclick="useLifelineHint()">
+            <span class="lifeline-icon">💡</span> Tech Hint
+          </button>
+          <button class="lifeline-btn" id="ll-vote" onclick="useLifelineVote()">
+            <span class="lifeline-icon">👥</span> Class Vote
+          </button>
+        </div>
+
+        <div id="options-area"></div>
+
+        <div class="who-answers" id="who-answers"></div>
+      </div>
+      <div class="q-sidebar">
+        <div class="cat-ladder" id="cat-ladder"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="teacher-controls">
+    <div class="tc-left">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;letter-spacing:.1rem;text-transform:uppercase;color:var(--muted)">Award points:</span>
+      <div class="award-btns" id="award-btns"></div>
+    </div>
+    <div class="tc-right">
+      <button class="btn-sm green" onclick="nextQuestion()">Next Question ▶</button>
+      <button class="btn-sm" onclick="showLeaderboard()">📊 Scores</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD SCREEN -->
+<div id="leaderboard" class="screen">
+  <div class="lb-title">📊 LEADERBOARD</div>
+  <div class="lb-subtitle" id="lb-subtitle">After Round 1</div>
+  <div class="lb-entries" id="lb-entries"></div>
+  <br>
+  <button class="btn-primary" id="lb-next-btn" onclick="continueFromLeaderboard()">Continue ▶</button>
+</div>
+
+<!-- FINAL SCREEN -->
+<div id="final-screen" class="screen">
+  <div class="trophy">🏆</div>
+  <div class="final-winner" id="final-winner">WINNER!</div>
+  <div id="final-scores" style="width:100%;max-width:600px"></div>
+  <br>
+  <button class="btn-primary" onclick="location.reload()">🔄 Play Again</button>
+</div>
+
+<!-- Score popup -->
+<div class="score-popup" id="score-popup">
+  <h2 id="sp-text">+1 Point!</h2>
+  <p id="sp-team">Team Alpha</p>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <h2 id="ov-title">Hint</h2>
+    <p id="ov-body">Hint text</p>
+    <button class="btn-primary" onclick="closeOverlay()">Got it</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  GAME DATA
+// ═══════════════════════════════════════════════════
+
+const ROUNDS = [
+  {
+    id: 1,
+    name: "FASTEST FINGER FIRST",
+    subtitle: "Quick-fire — buzz in to answer",
+    desc: "Quick-fire questions on manual transmission and clutch basics. First team to buzz in gets to answer. One point for every correct answer.",
+    rules: [
+      "Teacher nominates a team to answer after they buzz",
+      "Incorrect answer passes the question to other teams",
+      "No conferring — individual team member answers",
+      "1 point per correct answer"
+    ],
+    points: 1,
+    type: "buzz",
+    lifelineTeam: true,
+    questions: [
+      { q:"What type of gear arrangement uses dog teeth to lock a gear to the output shaft?", a:"Synchromesh / Dog teeth engagement", topic:"Manual Transmission",
+        hint:"Think about the engagement mechanism inside the gearbox — not friction, but positive mechanical lock." },
+      { q:"Name the component that synchronises shaft speeds before dog tooth engagement.", a:"Baulk ring (synchromesh ring)", topic:"Manual Transmission",
+        hint:"It's cone-shaped and sits between the dog teeth and the gear." },
+      { q:"What causes a grinding noise when changing gear?", a:"Worn or damaged baulk ring / synchromesh failure", topic:"Manual Transmission",
+        hint:"If speeds aren't matched before engagement, the dog teeth clash." },
+      { q:"What is the function of the clutch friction plate?", a:"Transmits torque from flywheel/pressure plate to gearbox input shaft via friction", topic:"Clutch Systems",
+        hint:"It's splined to the gearbox input shaft and sits between two steel surfaces." },
+      { q:"What component applies clamping force to the friction plate?", a:"Pressure plate (via diaphragm spring)", topic:"Clutch Systems",
+        hint:"It's bolted to the flywheel as part of the clutch cover assembly." },
+      { q:"What is 'clutch drag' and what causes it?", a:"Friction plate remains partially engaged when pedal is depressed — caused by worn release bearing, incorrect freeplay, or warped plate", topic:"Clutch Systems",
+        hint:"Drag means the clutch won't fully release — gears crunch when you try to select them at a standstill." },
+      { q:"What is freeplay in a clutch pedal?", a:"Small amount of pedal travel before release bearing contacts diaphragm spring fingers", topic:"Clutch Systems",
+        hint:"It must be within spec — too much or too little both cause problems." },
+      { q:"Name the component in a manual gearbox that holds the selector in the chosen gear.", a:"Detent (spring-loaded ball or pin)", topic:"Manual Transmission",
+        hint:"Without this, the gearbox would pop out of gear under load." },
+      { q:"What does 'end float' indicate in a gearbox?", a:"Axial movement of a shaft — excess indicates worn bearings or incorrect shim selection", topic:"Manual Transmission",
+        hint:"It's measured with a dial test indicator and compared to specification." },
+      { q:"What type of oil specification is typically required in a manual gearbox?", a:"EP (Extreme Pressure) gear oil to manufacturer's viscosity spec", topic:"Manual Transmission",
+        hint:"Wrong oil causes accelerated wear on gears and synchromesh components." },
+    ]
+  },
+  {
+    id: 2,
+    name: "COMPONENT ID CHALLENGE",
+    subtitle: "Name it — describe it — locate it",
+    desc: "Teams are given a description and must identify the component, or given the component and must describe its function. Two points per correct answer.",
+    rules: [
+      "Teacher reads the description — teams write their answer on a mini-whiteboard",
+      "All teams reveal simultaneously on the count of 3",
+      "2 points for correct component name AND function",
+      "1 point for component name only (partial credit)",
+      "Lifelines can be used — one per team per round"
+    ],
+    points: 2,
+    type: "mcq",
+    questions: [
+      { q:"This component is cone-shaped and sits between the synchromesh sleeve and the gear. It synchronises speeds before positive engagement occurs. What is it?",
+        options:["A: Selector fork","B: Baulk ring","C: Detent ball","D: Dog teeth"],
+        answer:1, topic:"Manual Transmission",
+        hint:"Think cone shape — it matches the taper on the gear." },
+      { q:"This component is bolted to the engine crankshaft. It provides a precision-machined friction surface and stores rotational energy. What is it?",
+        options:["A: Pressure plate","B: Friction plate","C: Flywheel","D: Release bearing"],
+        answer:2, topic:"Clutch Systems",
+        hint:"It's always spinning with the engine and is the surface the friction plate grips." },
+      { q:"Vehicles commonly exhibit 'judder' when pulling away from rest. Which component is most likely causing this?",
+        options:["A: Release bearing","B: Diaphragm spring","C: Flywheel with hot spots / contaminated friction plate","D: Clutch fork"],
+        answer:2, topic:"Clutch Systems",
+        hint:"Judder is caused by inconsistent friction — contamination or surface damage." },
+      { q:"This component routes ATF pressure to the correct clutch packs in an automatic transmission on instruction from the TCU. What is it?",
+        options:["A: Torque converter","B: Valve body","C: Planetary gearset","D: Hydraulic pump"],
+        answer:1, topic:"Manual Transmission",
+        hint:"Think of it as the hydraulic 'brain' — it contains solenoids and passages." },
+      { q:"A gearbox 'pops out of 3rd gear under load'. Which three components should be inspected first?",
+        options:["A: Detents, selector fork, synchro hub","B: Baulk ring, flywheel, clutch fork","C: Input shaft seal, bearings, dog teeth","D: Crown wheel, pinion, selector fork"],
+        answer:0, topic:"Manual Transmission",
+        hint:"Popping out of gear is a selector/detent fault — not a synchromesh fault." },
+      { q:"The release bearing in a clutch assembly must rotate because it is constantly in contact with which spinning component when the pedal is depressed?",
+        options:["A: Flywheel","B: Pressure plate cover","C: Diaphragm spring fingers","D: Input shaft"],
+        answer:2, topic:"Clutch Systems",
+        hint:"The fingers are spinning at engine speed — the bearing allows the non-rotating pedal mechanism to push against them." },
+      { q:"What is 'backlash' in a transmission context?",
+        options:["A: Resistance in the gear selector","B: Measured clearance between meshing gear teeth","C: End movement of the output shaft","D: Force applied by the detent spring"],
+        answer:1, topic:"Manual Transmission",
+        hint:"It's a clearance measurement — too little causes binding, too much causes noise." },
+      { q:"A vehicle has oil on the garage floor under the gearbox and a rumbling noise. Which two components are most likely at fault?",
+        options:["A: Clutch fork and baulk ring","B: Input/output shaft seals and bearings","C: Selector fork and detent","D: Crown wheel and pinion"],
+        answer:1, topic:"Manual Transmission",
+        hint:"Oil leak = seal failure. Rumble = bearing failure. Both happen together as bearings wear and allow shaft movement." },
+    ]
+  },
+  {
+    id: 3,
+    name: "FAULT FILES",
+    subtitle: "Diagnose the vehicle",
+    desc: "A customer complaint is read out. Teams must identify the likely fault, affected component, and one diagnostic test. Three points for full answer.",
+    rules: [
+      "Teacher reads the customer complaint scenario",
+      "Teams have 60 seconds to discuss and write their diagnosis",
+      "3 points: correct component + cause + diagnostic test",
+      "2 points: correct component + cause only",
+      "1 point: correct component identification only",
+      "Teacher judges and awards points — answers on screen after each"
+    ],
+    points: 3,
+    type: "open",
+    questions: [
+      { q:"🔧 CUSTOMER COMPLAINT: 'My car makes a grinding noise every time I change gear, especially 2nd and 3rd. It's getting worse.'",
+        a:"Component: Baulk ring (synchromesh) — likely 2nd/3rd gear rings. Cause: Wear or damage to cone surface, preventing speed synchronisation. Diagnostic test: Road test to confirm — gearbox removal and inspection of synchromesh components required.",
+        topic:"Manual Transmission",
+        hint:"Grinding on gear change = synchromesh failure. The baulk ring can't match speeds before dog teeth engage." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'When I pull away the car shudders and vibrates through the seat and gear stick. Once moving it's fine.'",
+        a:"Component: Friction plate (contamination) or flywheel (hot spots/scoring). Cause: Oil contamination on friction lining, or flywheel surface damage causing inconsistent grip. Diagnostic test: Inspect flywheel and friction plate on removal — check for oil contamination, scoring, or glazing.",
+        topic:"Clutch Systems",
+        hint:"Shudder on take-up = inconsistent clutch engagement = surface problem." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'My gearbox pops out of 3rd gear whenever I accelerate hard. It slips back to neutral by itself.'",
+        a:"Component: Detents, selector fork, synchro hub. Cause: Worn detent ball/spring failing to hold selector, or worn selector fork allowing hub to move under load. Diagnostic test: Gearbox removal — inspect detent springs and balls, selector fork wear, hub splines.",
+        topic:"Manual Transmission",
+        hint:"Popping out under load = selector system not holding position = detent or fork wear." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'There's a high-pitched squeal from the clutch area every time I lift the clutch pedal. The noise stops when the pedal is fully up or fully down.'",
+        a:"Component: Release bearing (thrust bearing). Cause: Worn or dry release bearing making contact with diaphragm spring fingers. The noise only occurs when light pressure is applied. Diagnostic test: Operate clutch with engine running and listen — noise pinpoints to release bearing contact point.",
+        topic:"Clutch Systems",
+        hint:"Squeal during pedal lift = bearing under partial load. Release bearings are pre-lubricated — if they dry out or wear they squeal." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'There is oil dripping from the back of the gearbox and a low rumbling noise when driving. The noise changes with road speed, not engine speed.'",
+        a:"Component: Output shaft seal and output shaft bearing. Cause: Worn output shaft bearing allowing shaft movement, damaging the seal. Road-speed-related noise confirms it is a wheel/shaft bearing rather than engine-speed related. Diagnostic test: Check ATF/gearbox oil level. Road test to confirm noise characteristic. Remove propshaft/driveshaft and inspect output seal and bearing.",
+        topic:"Manual Transmission",
+        hint:"Oil leak + noise at the output end. Speed-related noise = output/wheel bearing, not input/engine." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'The clutch pedal feels spongy and sinks slowly to the floor when held down. I have to pump it to get drive.'",
+        a:"Component: Hydraulic master cylinder or slave cylinder (or clutch hose). Cause: Internal seal failure allowing fluid bypass, or air in the hydraulic circuit. Diagnostic test: Check fluid level in reservoir. Inspect for leaks at master/slave cylinder and hose. Bleed the clutch hydraulic system.",
+        topic:"Clutch Systems",
+        hint:"Spongy pedal = air or fluid loss in the hydraulic circuit. Pumping restores pressure briefly = internal bypass." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'My car is difficult to engage 1st gear from rest — there is a crunching sound and I have to really force the lever.'",
+        a:"Component: Clutch drag — friction plate not fully releasing. Could be release bearing, excessive freeplay, or distorted friction plate. Cause: Clutch not fully disengaging, so input shaft still spinning when trying to engage 1st. Diagnostic test: Adjust clutch freeplay (cable) or bleed hydraulic system. Inspect release bearing and plate on removal if not resolved.",
+        topic:"Clutch Systems",
+        hint:"Crunching at standstill when selecting 1st = clutch not releasing = drag. Input shaft still spinning causes dog teeth clash." },
+      { q:"🔧 CUSTOMER COMPLAINT: 'There is a strong burning smell and my engine revs rise when going uphill but the car does not accelerate as it should.'",
+        a:"Component: Friction plate — worn to or beyond rivet heads. Cause: Friction material worn, reducing clamping friction and causing slip. May also be contaminated with oil. Diagnostic test: Road test on a hill — confirm slip under load. Inspect friction plate thickness on removal — compare to minimum specification.",
+        topic:"Clutch Systems",
+        hint:"Burning smell + revs rising without acceleration = clutch slip = worn or contaminated friction plate." },
+    ]
+  },
+  {
+    id: 4,
+    name: "HOT SEAT",
+    subtitle: "One team. Full pressure. 5 points.",
+    desc: "Each team takes the Hot Seat in turn. One representative faces escalating questions — 5 points each. Lifelines available but limited.",
+    rules: [
+      "Each team nominates one representative for the Hot Seat",
+      "Questions get progressively harder — answer 4 correctly to earn the full 20 points",
+      "Team may use one lifeline: Phone a Friend (30 sec team consultation)",
+      "Wrong answer — question passes to the next team for 3 points",
+      "5 points per correct answer",
+    ],
+    points: 5,
+    type: "mcq",
+    questions: [
+      { q:"A technician measures 0.8mm end float on a gearbox input shaft. The specification is 0.05–0.25mm. What is the most likely cause and what must be done?",
+        options:["A: Normal — no action needed","B: Worn input shaft bearing — replace bearing and select correct shim","C: Incorrect gear oil — drain and refill","D: Worn baulk ring — replace synchromesh"],
+        answer:1, topic:"Manual Transmission",
+        hint:"End float beyond spec = bearing wear. Shims control end float — new bearing may restore spec or may need selection." },
+      { q:"During a stall speed test on a manual gearbox vehicle, the engine stalls immediately when the clutch is released in 1st gear with the brakes applied. What does this indicate?",
+        options:["A: The clutch is slipping","B: The engine is weak","C: The clutch is engaging correctly — holding the vehicle","D: The flywheel is cracked"],
+        answer:2, topic:"Clutch Systems",
+        hint:"Stall = clutch is gripping and trying to drive the vehicle against the brakes. That's correct behaviour." },
+      { q:"Pinion depth shim selection is critical during differential reassembly. What is the consequence of fitting a shim that positions the pinion too deep?",
+        options:["A: Backlash will increase — causing noise under drive","B: Backlash will decrease — causing overheating and premature wear","C: End float will increase — causing oil leaks","D: No significant effect if within 0.5mm"],
+        answer:1, topic:"Manual Transmission",
+        hint:"Too deep = pinion meshes too tightly with crown wheel = reduced backlash = binding under load = heat and wear." },
+      { q:"A vehicle fitted with a dual-mass flywheel (DMF) presents with clutch judder and a rattling noise at idle. The friction plate is new. What is the most likely cause?",
+        options:["A: Wrong engine oil contaminating the new plate","B: Worn or failed dual-mass flywheel — springs collapsed","C: Incorrect clutch plate orientation on fitting","D: Release bearing failure"],
+        answer:1, topic:"Clutch Systems",
+        hint:"DMF has internal torsion springs that absorb vibration. When they collapse, judder and rattle return even with a new plate." },
+      { q:"A technician finds the gearbox output shaft bearing has failed repeatedly after two replacements in 12 months. What is the most likely root cause being overlooked?",
+        options:["A: Using the wrong brand of bearing","B: Incorrect propshaft angle causing constant vibration and overload","C: Engine mounts too stiff","D: Gearbox oil overfilled"],
+        answer:1, topic:"Manual Transmission",
+        hint:"Repeated bearing failures in one location = external load is causing them to fail. Propshaft angle puts bending load on the output shaft." },
+      { q:"When replacing a clutch, the technician notices the flywheel face has light scoring and three distinct blue heat spots. What is the correct action?",
+        options:["A: Fit the new clutch — scoring is normal after high mileage","B: Machine the flywheel face flat and refit","C: Replace the flywheel — heat spots indicate metallurgical change that cannot be fully corrected by machining","D: Fit a high-performance friction plate to compensate"],
+        answer:2, topic:"Clutch Systems",
+        hint:"Blue/brown heat spots mean the metal structure has changed locally. Machining removes material but the hardness variation remains — causing judder." },
+    ]
+  },
+  {
+    id: 5,
+    name: "SPEED ROUND",
+    subtitle: "5 seconds. Buzz. Answer. Score.",
+    desc: "Rapid-fire buzzer round — 5 seconds to answer each question. First team to buzz in takes the point. Fastest fingers win!",
+    rules: [
+      "Questions appear on screen — teams buzz as soon as they know",
+      "5 seconds to give the answer after buzzing",
+      "Correct = 1 point. Wrong = question passes to next team",
+      "No lifelines in this round",
+      "20 questions — highest score wins the Speed Round bonus: +5 points!"
+    ],
+    points: 1,
+    type: "buzz",
+    questions: [
+      { q:"What does ATF stand for?", a:"Automatic Transmission Fluid", topic:"Manual Transmission" },
+      { q:"Name the cone-shaped synchromesh component.", a:"Baulk ring", topic:"Manual Transmission" },
+      { q:"What holds the selector fork in the chosen gear position?", a:"Detent (ball and spring)", topic:"Manual Transmission" },
+      { q:"A clutch that slips under load has a worn what?", a:"Friction plate", topic:"Clutch Systems" },
+      { q:"What does the stator do in a torque converter?", a:"Redirects ATF to multiply torque", topic:"Manual Transmission" },
+      { q:"What is the purpose of torsion springs in a friction plate?", a:"Absorb drive-line shock during engagement", topic:"Clutch Systems" },
+      { q:"Name the component bolted to the crankshaft that the friction plate grips.", a:"Flywheel", topic:"Clutch Systems" },
+      { q:"What does excessive end float indicate?", a:"Worn bearing or incorrect shim", topic:"Manual Transmission" },
+      { q:"A grinding noise on gear change indicates failure of which component?", a:"Baulk ring / synchromesh", topic:"Manual Transmission" },
+      { q:"What symptom results from clutch drag?", a:"Difficulty selecting gears / crunching at standstill", topic:"Clutch Systems" },
+      { q:"What type of force does the diaphragm spring apply to the pressure plate?", a:"Clamping force", topic:"Clutch Systems" },
+      { q:"What is the difference between backlash and end float?", a:"Backlash = gear tooth clearance. End float = axial shaft movement.", topic:"Manual Transmission" },
+      { q:"Name ONE symptom of a failing release bearing.", a:"Squealing or rumbling when clutch pedal is depressed / lifted", topic:"Clutch Systems" },
+      { q:"What is the selector fork's job?", a:"Moves the synchromesh sleeve to engage a gear", topic:"Manual Transmission" },
+      { q:"Why must clutch components be replaced as a complete kit?", a:"Wear patterns are matched — mixing new and old causes judder and premature failure", topic:"Clutch Systems" },
+      { q:"What is preload in a bearing context?", a:"Pre-applied force to eliminate end float / internal clearance", topic:"Manual Transmission" },
+      { q:"What causes a burning smell from the clutch?", a:"Friction plate slipping — worn or contaminated", topic:"Clutch Systems" },
+      { q:"Name the component that prevents the gearbox popping out of gear.", a:"Detent", topic:"Manual Transmission" },
+      { q:"What is the bite point and how does it change with wear?", a:"Point at which clutch begins to transmit drive — rises higher up the pedal as plate wears", topic:"Clutch Systems" },
+      { q:"What does EP stand for in EP gear oil?", a:"Extreme Pressure", topic:"Manual Transmission" },
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════
+const TEAM_COLORS = ["#3b82f6","#10b981","#f0b429","#e53e3e"];
+
+let state = {
+  teams: [],
+  currentRound: 0,
+  currentQ: 0,
+  lifelinesUsed: { "50": false, hint: false, vote: false },
+  awaitingAnswer: false,
+  answerRevealed: false,
+  fromLeaderboard: false,
+};
+
+function startGame() {
+  state.teams = [
+    { name: document.getElementById('t1').value || 'Team Alpha', color: TEAM_COLORS[0], score: 0 },
+    { name: document.getElementById('t2').value || 'Team Bravo', color: TEAM_COLORS[1], score: 0 },
+    { name: document.getElementById('t3').value || 'Team Charlie', color: TEAM_COLORS[2], score: 0 },
+    { name: document.getElementById('t4').value || 'Team Delta', color: TEAM_COLORS[3], score: 0 },
+  ];
+  state.currentRound = 0;
+  state.currentQ = 0;
+  showRoundIntro();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── ROUND INTRO ────────────────────────────────────
+function showRoundIntro() {
+  const r = ROUNDS[state.currentRound];
+  document.getElementById('ri-badge').textContent = `Round ${r.id} of ${ROUNDS.length}`;
+  document.getElementById('ri-title').textContent = r.name;
+  document.getElementById('ri-title').style.color = 'var(--gold)';
+  document.getElementById('ri-desc').textContent = r.desc;
+  const ul = document.getElementById('ri-rules-list');
+  ul.innerHTML = r.rules.map(rule => `<li>${rule}</li>`).join('');
+  document.getElementById('ri-start-btn').textContent = `▶ Begin Round ${r.id}`;
+  state.currentQ = 0;
+  state.lifelinesUsed = { "50": false, hint: false, vote: false };
+  showScreen('round-intro');
+}
+
+function startRound() {
+  showQuestion();
+}
+
+// ── QUESTION ────────────────────────────────────────
+function showQuestion() {
+  const r   = ROUNDS[state.currentRound];
+  const qs  = r.questions;
+  const idx = state.currentQ;
+
+  if (idx >= qs.length) {
+    showLeaderboard(true);
+    return;
+  }
+
+  const q = qs[idx];
+  state.answerRevealed = false;
+
+  // Header
+  document.getElementById('gh-round').textContent = `Round ${r.id} — ${r.name}`;
+  document.getElementById('gh-title').textContent = 'TRANSMISSION CHALLENGE';
+  updateScoreboard();
+
+  // Progress dots
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = qs.map((_, i) =>
+    `<div class="progress-dot ${i < idx ? 'done' : i === idx ? 'current' : ''}"></div>`
+  ).join('');
+
+  // Meta
+  document.getElementById('q-num').textContent = `Q${idx + 1} of ${qs.length}`;
+  document.getElementById('q-points').textContent = `+${r.points} pt${r.points > 1 ? 's' : ''}`;
+  document.getElementById('q-topic').textContent = q.topic;
+  document.getElementById('q-text').textContent = q.q;
+
+  // Lifelines (rounds 2-4 only)
+  const llPanel = document.getElementById('lifeline-panel');
+  if (r.type === 'mcq' && r.id <= 4) {
+    llPanel.style.display = 'flex';
+    document.getElementById('ll-50').className   = 'lifeline-btn' + (state.lifelinesUsed['50']   ? ' used' : '');
+    document.getElementById('ll-hint').className = 'lifeline-btn' + (state.lifelinesUsed.hint    ? ' used' : '');
+    document.getElementById('ll-vote').className = 'lifeline-btn' + (state.lifelinesUsed.vote    ? ' used' : '');
+  } else {
+    llPanel.style.display = 'none';
+  }
+
+  // Category ladder for Hot Seat
+  const ladder = document.getElementById('cat-ladder');
+  if (r.id === 4) {
+    ladder.innerHTML = r.questions.map((_, i) =>
+      `<div class="cat-rung ${i < idx ? 'done' : i === idx ? 'active' : ''}">
+        £${(i+1)*5}k — Q${i+1}
+      </div>`
+    ).reverse().join('');
+    ladder.style.display = 'flex';
+  } else {
+    ladder.style.display = 'none';
+  }
+
+  // Options area
+  const area = document.getElementById('options-area');
+  if (r.type === 'mcq' && q.options) {
+    area.innerHTML = `<div class="options-grid" id="opts-grid">
+      ${q.options.map((opt, i) =>
+        `<button class="opt-btn" id="opt-${i}" onclick="selectOpt(${i})">
+          <span class="opt-letter">${opt[0]}</span>
+          <span>${opt.slice(3)}</span>
+        </button>`
+      ).join('')}
+    </div>`;
+  } else {
+    area.innerHTML = `
+      <div class="open-answer-area">
+        <div class="answer-hidden" onclick="revealAnswer()" id="answer-hidden-btn">
+          🔍 Click to reveal answer
+        </div>
+        <div class="answer-reveal" id="answer-reveal">
+          ${q.a || ''}
+        </div>
+      </div>`;
+  }
+
+  // Who answers (buzz rounds)
+  const wa = document.getElementById('who-answers');
+  if (r.type === 'buzz') {
+    wa.innerHTML = `<div style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;letter-spacing:.15rem;text-transform:uppercase;color:var(--muted);width:100%;text-align:center;margin-bottom:.5rem;">WHICH TEAM BUZZED IN?</div>` +
+      state.teams.map((t, i) =>
+        `<button class="team-buzz-btn"
+          style="color:${t.color};border-color:${t.color}"
+          onclick="buzzTeam(${i})">${t.name}</button>`
+      ).join('');
+    wa.style.display = 'flex';
+    wa.style.flexDirection = 'column';
+    wa.style.alignItems = 'center';
+    wa.style.gap = '.6rem';
+  } else {
+    wa.innerHTML = '';
+    wa.style.display = 'none';
+  }
+
+  // Award buttons
+  const awdBtns = document.getElementById('award-btns');
+  awdBtns.innerHTML = state.teams.map((t, i) =>
+    `<button class="award-btn"
+      style="color:${t.color};border-color:${t.color};background:rgba(${hexToRgb(t.color)},0.1)"
+      onclick="awardPoints(${i}, ${r.points})">+${r.points} → ${t.name}</button>`
+  ).join('');
+
+  showScreen('question-screen');
+}
+
+function selectOpt(idx) {
+  const q   = ROUNDS[state.currentRound].questions[state.currentQ];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[idx].classList.add(idx === q.answer ? 'correct' : 'wrong');
+  btns[q.answer].classList.add('correct');
+}
+
+function revealAnswer() {
+  document.getElementById('answer-hidden-btn').style.display = 'none';
+  const ar = document.getElementById('answer-reveal');
+  ar.style.display = 'block';
+  state.answerRevealed = true;
+}
+
+function buzzTeam(teamIdx) {
+  // Highlight which team buzzed
+  document.querySelectorAll('.team-buzz-btn').forEach((b,i) => {
+    b.style.opacity = i === teamIdx ? '1' : '0.3';
+    b.style.transform = i === teamIdx ? 'scale(1.05)' : 'scale(1)';
+  });
+}
+
+function awardPoints(teamIdx, pts) {
+  state.teams[teamIdx].score += pts;
+  updateScoreboard();
+  showScorePopup(`+${pts} Point${pts>1?'s':''}!`, state.teams[teamIdx].name);
+}
+
+function nextQuestion() {
+  state.currentQ++;
+  showQuestion();
+}
+
+// ── LIFELINES ───────────────────────────────────────
+function useLifeline50() {
+  if (state.lifelinesUsed['50']) return;
+  state.lifelinesUsed['50'] = true;
+  document.getElementById('ll-50').classList.add('used');
+  const q    = ROUNDS[state.currentRound].questions[state.currentQ];
+  const btns = document.querySelectorAll('.opt-btn');
+  let removed = 0;
+  btns.forEach((b, i) => {
+    if (i !== q.answer && removed < 2) {
+      b.style.opacity = '0.15'; b.style.pointerEvents = 'none'; removed++;
+    }
+  });
+}
+
+function useLifelineHint() {
+  if (state.lifelinesUsed.hint) return;
+  state.lifelinesUsed.hint = true;
+  document.getElementById('ll-hint').classList.add('used');
+  const q = ROUNDS[state.currentRound].questions[state.currentQ];
+  showOverlay('💡 Tech Hint', q.hint || 'Think carefully about the component\'s primary function and location in the system.');
+}
+
+function useLifelineVote() {
+  if (state.lifelinesUsed.vote) return;
+  state.lifelinesUsed.vote = true;
+  document.getElementById('ll-vote').classList.add('used');
+  showOverlay('👥 Class Vote', 'Ask the whole class to vote by show of hands for each option. The team can then choose whether to follow the majority!');
+}
+
+// ── LEADERBOARD ─────────────────────────────────────
+function showLeaderboard(afterRound = false) {
+  const sorted = [...state.teams].sort((a,b) => b.score - a.score);
+  const maxScore = sorted[0].score || 1;
+
+  document.getElementById('lb-subtitle').textContent =
+    afterRound ? `After Round ${ROUNDS[state.currentRound].id}` : 'Current Standings';
+
+  const lbNext = document.getElementById('lb-next-btn');
+  if (afterRound && state.currentRound < ROUNDS.length - 1) {
+    lbNext.textContent = `▶ Round ${state.currentRound + 2} — ${ROUNDS[state.currentRound + 1].name}`;
+    lbNext.onclick = () => { state.currentRound++; showRoundIntro(); };
+  } else if (afterRound) {
+    lbNext.textContent = '🏆 Final Results';
+    lbNext.onclick = showFinalScreen;
+  } else {
+    lbNext.textContent = '◀ Back to Question';
+    lbNext.onclick = () => showScreen('question-screen');
+  }
+
+  const medals = ['🥇','🥈','🥉','4️⃣'];
+  document.getElementById('lb-entries').innerHTML = sorted.map((t, i) => {
+    const pct = Math.round((t.score / maxScore) * 100);
+    return `<div class="lb-entry" style="animation-delay:${i*0.1}s">
+      <div class="lb-rank">${medals[i]}</div>
+      <div class="lb-dot" style="background:${t.color}"></div>
+      <div class="lb-name">${t.name}</div>
+      <div class="lb-bar-wrap">
+        <div class="lb-bar-bg">
+          <div class="lb-bar-fill" style="width:${pct}%;background:${t.color}"></div>
+        </div>
+      </div>
+      <div class="lb-score">${t.score}</div>
+    </div>`;
+  }).join('');
+
+  showScreen('leaderboard');
+}
+
+function continueFromLeaderboard() {}
+
+function showFinalScreen() {
+  const sorted = [...state.teams].sort((a,b) => b.score - a.score);
+  const winner = sorted[0];
+  document.getElementById('final-winner').textContent = `🏆 ${winner.name} WINS! 🏆`;
+  document.getElementById('final-scores').innerHTML =
+    `<div class="lb-entries">` +
+    sorted.map((t,i) => `
+      <div class="lb-entry" style="animation-delay:${i*0.1}s">
+        <div class="lb-rank">${['🥇','🥈','🥉','4️⃣'][i]}</div>
+        <div class="lb-dot" style="background:${t.color}"></div>
+        <div class="lb-name">${t.name}</div>
+        <div class="lb-score" style="color:${t.color}">${t.score} pts</div>
+      </div>`).join('') + `</div>`;
+  spawnConfetti();
+  showScreen('final-screen');
+}
+
+// ── HELPERS ─────────────────────────────────────────
+function updateScoreboard() {
+  document.getElementById('scoreboard').innerHTML = state.teams.map(t =>
+    `<div class="score-chip">
+      <div class="score-dot" style="background:${t.color}"></div>
+      <span class="score-name">${t.name}</span>
+      <span class="score-val">${t.score}</span>
+    </div>`
+  ).join('');
+}
+
+function showScorePopup(text, teamName) {
+  const pop = document.getElementById('score-popup');
+  document.getElementById('sp-text').textContent = text;
+  document.getElementById('sp-team').textContent = teamName;
+  pop.classList.add('show');
+  setTimeout(() => pop.classList.remove('show'), 1800);
+}
+
+function showOverlay(title, body) {
+  document.getElementById('ov-title').textContent = title;
+  document.getElementById('ov-body').textContent  = body;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function spawnConfetti() {
+  const colours = ['#f0b429','#10b981','#3b82f6','#e53e3e','#8b5cf6','#06b6d4'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colours[Math.floor(Math.random()*colours.length)];
+    el.style.animationDelay  = Math.random() * 3 + 's';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    el.style.width  = (6 + Math.random() * 6) + 'px';
+    el.style.height = (6 + Math.random() * 6) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+</script>
+</body>
+</html>
